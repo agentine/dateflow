@@ -305,6 +305,28 @@ class TestDeltaBetweenDates:
         assert rd.hours == 5
         assert rd.minutes == 30
 
+    def test_delta_negative_one_second(self):
+        """Negative sub-day delta should not produce spurious days=-1."""
+        rd = relativedelta(
+            datetime(2026, 3, 11, 9, 59, 59),
+            datetime(2026, 3, 11, 10, 0, 0),
+        )
+        assert rd.days == 0
+        assert rd.hours == 0
+        assert rd.minutes == 0
+        assert rd.seconds == -1
+
+    def test_delta_negative_hours(self):
+        """Negative hour delta should decompose correctly."""
+        rd = relativedelta(
+            datetime(2026, 3, 11, 8, 0, 0),
+            datetime(2026, 3, 11, 10, 0, 0),
+        )
+        assert rd.days == 0
+        assert rd.hours == -2
+        assert rd.minutes == 0
+        assert rd.seconds == 0
+
 
 # ---------------------------------------------------------------------------
 # Operators

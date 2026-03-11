@@ -195,7 +195,7 @@ class relativedelta:
             self.days = 0
             sign = 1 if total_secs >= 0 else -1
 
-            self.days = total_secs // 86400
+            self.days = int(total_secs / 86400)
             leftover = abs(total_secs) - abs(self.days) * 86400
             self.hours = sign * (leftover // 3600)
             leftover %= 3600
