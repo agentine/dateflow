@@ -177,10 +177,8 @@ class relativedelta:
             months_diff += 1
             dtm = _add_months(dt2, months_diff)
 
-        self.years, self.months = divmod(months_diff, 12)
-        if self.months < 0:
-            self.years -= 1
-            self.months += 12
+        self.years = int(months_diff / 12)  # truncate toward zero
+        self.months = months_diff - self.years * 12
 
         # Remaining difference in days, hours, minutes, seconds, microseconds
         remaining = dt1 - dtm
