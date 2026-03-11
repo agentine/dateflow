@@ -408,9 +408,11 @@ class relativedelta:
         """Apply this relativedelta to a date or datetime."""
         is_datetime = isinstance(dt, datetime)
 
-        # Start with the date's components
-        year = dt.year + self.years
-        month = dt.month + self.months
+        # Start with absolute base (if set) or dt's value, then add relative
+        base_year = self.year if self.year is not None else dt.year
+        year = base_year + self.years
+        base_month = self.month if self.month is not None else dt.month
+        month = base_month + self.months
 
         # Normalize month/year
         if month > 12 or month < 1:
@@ -421,14 +423,7 @@ class relativedelta:
         # Clip day to month end
         day = min(dt.day, calendar.monthrange(year, month)[1])
 
-        # Apply absolute year, month, day
-        if self.year is not None:
-            year = self.year
-            day = min(day, calendar.monthrange(year, month)[1])
-        if self.month is not None:
-            month = self.month
-            # Re-clip day since month may have changed
-            day = min(day, calendar.monthrange(year, month)[1])
+        # Apply absolute day
         if self.day is not None:
             day = min(self.day, calendar.monthrange(year, month)[1])
 
@@ -438,20 +433,14 @@ class relativedelta:
 
         if is_datetime:
             assert isinstance(dt, datetime)
-            hour = dt.hour + self.hours
-            minute = dt.minute + self.minutes
-            second = dt.second + self.seconds
-            microsecond = dt.microsecond + self.microseconds
-
-            # Apply absolute time components
-            if self.hour is not None:
-                hour = self.hour
-            if self.minute is not None:
-                minute = self.minute
-            if self.second is not None:
-                second = self.second
-            if self.microsecond is not None:
-                microsecond = self.microsecond
+            base_hour = self.hour if self.hour is not None else dt.hour
+            hour = base_hour + self.hours
+            base_minute = self.minute if self.minute is not None else dt.minute
+            minute = base_minute + self.minutes
+            base_second = self.second if self.second is not None else dt.second
+            second = base_second + self.seconds
+            base_microsecond = self.microsecond if self.microsecond is not None else dt.microsecond
+            microsecond = base_microsecond + self.microseconds
 
             result = datetime(year, month, day, tzinfo=dt.tzinfo)
             result += timedelta(

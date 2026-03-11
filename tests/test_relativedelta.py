@@ -225,6 +225,42 @@ class TestArithmetic:
         result = d + relativedelta(year=2023)
         assert result == date(2023, 2, 28)
 
+    def test_absolute_and_relative_year(self):
+        """Absolute year=2020 plus relative years=5 should yield 2025."""
+        dt = datetime(2026, 3, 11)
+        result = dt + relativedelta(year=2020, years=5)
+        assert result.year == 2025
+
+    def test_absolute_and_relative_month(self):
+        """Absolute month=1 plus relative months=2 should yield month 3."""
+        dt = datetime(2026, 6, 15)
+        result = dt + relativedelta(month=1, months=2)
+        assert result.month == 3
+
+    def test_absolute_and_relative_hour(self):
+        """Absolute hour=10 plus relative hours=3 should yield hour 13."""
+        dt = datetime(2026, 3, 11, 8, 0, 0)
+        result = dt + relativedelta(hour=10, hours=3)
+        assert result.hour == 13
+
+    def test_absolute_and_relative_minute(self):
+        """Absolute minute=15 plus relative minutes=10 should yield minute 25."""
+        dt = datetime(2026, 3, 11, 8, 0, 0)
+        result = dt + relativedelta(minute=15, minutes=10)
+        assert result.minute == 25
+
+    def test_absolute_and_relative_second(self):
+        """Absolute second=30 plus relative seconds=15 should yield second 45."""
+        dt = datetime(2026, 3, 11, 8, 0, 0)
+        result = dt + relativedelta(second=30, seconds=15)
+        assert result.second == 45
+
+    def test_absolute_and_relative_microsecond(self):
+        """Absolute microsecond=100 plus relative microseconds=200 should yield 300."""
+        dt = datetime(2026, 3, 11, 8, 0, 0, 0)
+        result = dt + relativedelta(microsecond=100, microseconds=200)
+        assert result.microsecond == 300
+
 
 # ---------------------------------------------------------------------------
 # Weekday targeting
