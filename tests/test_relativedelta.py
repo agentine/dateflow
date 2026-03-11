@@ -515,3 +515,50 @@ class TestEqualityAndRepr:
         rd = relativedelta(years=1)
         assert rd != "not a relativedelta"
         assert rd != 42
+
+
+class TestDateTimeUpgrade:
+    """date objects should be upgraded to datetime when time fields are present."""
+
+    def test_date_plus_hours(self):
+        result = date(2026, 3, 11) + relativedelta(hours=5)
+        assert isinstance(result, datetime)
+        assert result == datetime(2026, 3, 11, 5, 0)
+
+    def test_date_plus_minutes_seconds(self):
+        result = date(2026, 3, 11) + relativedelta(minutes=30, seconds=15)
+        assert isinstance(result, datetime)
+        assert result == datetime(2026, 3, 11, 0, 30, 15)
+
+    def test_date_plus_absolute_hour(self):
+        result = date(2026, 3, 11) + relativedelta(hour=14, minute=30)
+        assert isinstance(result, datetime)
+        assert result == datetime(2026, 3, 11, 14, 30)
+
+    def test_date_without_time_fields_stays_date(self):
+        result = date(2026, 3, 11) + relativedelta(days=5)
+        assert type(result) is date
+        assert result == date(2026, 3, 16)
+
+
+class TestMixedDateDatetimeDelta:
+    """_compute_delta with mixed date/datetime inputs."""
+
+    def test_datetime_minus_date(self):
+        delta = relativedelta(datetime(2026, 3, 11, 15, 0, 0), date(2026, 3, 11))
+        assert delta.hours == 15
+
+    def test_date_minus_datetime(self):
+        delta = relativedelta(date(2026, 3, 11), datetime(2026, 3, 11, 3, 0))
+        assert delta.hours == -3
+
+
+class TestTopLevelImports:
+    """__init__.py exports public API symbols."""
+
+    def test_imports(self):
+        from dateflow import relativedelta, weekday, MO, TU, WE, TH, FR, SA, SU, easter
+        assert relativedelta is not None
+        assert weekday is not None
+        assert MO.weekday == 0
+        assert easter is not None

@@ -142,7 +142,7 @@ class relativedelta:
     def _compute_delta(self, dt1: Union[date, datetime], dt2: Union[date, datetime]) -> None:
         """Compute relativedelta such that dt2 + result == dt1."""
         # Ensure both are datetimes for uniform handling
-        if isinstance(dt1, datetime) and isinstance(dt2, datetime):
+        if isinstance(dt1, datetime) or isinstance(dt2, datetime):
             self._has_time = True
         else:
             self._has_time = False
@@ -404,6 +404,14 @@ class relativedelta:
 
     def _apply(self, dt: Union[date, datetime]) -> Union[date, datetime]:
         """Apply this relativedelta to a date or datetime."""
+        # Upgrade date to datetime if any time fields are set
+        has_time_fields = (
+            self.hours or self.minutes or self.seconds or self.microseconds
+            or self.hour is not None or self.minute is not None
+            or self.second is not None or self.microsecond is not None
+        )
+        if not isinstance(dt, datetime) and has_time_fields:
+            dt = datetime(dt.year, dt.month, dt.day)
         is_datetime = isinstance(dt, datetime)
 
         # Start with absolute base (if set) or dt's value, then add relative
