@@ -424,6 +424,7 @@ class relativedelta:
         # Apply absolute year, month, day
         if self.year is not None:
             year = self.year
+            day = min(day, calendar.monthrange(year, month)[1])
         if self.month is not None:
             month = self.month
             # Re-clip day since month may have changed

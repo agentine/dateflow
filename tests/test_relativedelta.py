@@ -207,6 +207,24 @@ class TestArithmetic:
         result = dt + relativedelta(days=1)
         assert result == datetime(2026, 2, 1)
 
+    def test_absolute_year_leap_to_nonleap(self):
+        """Absolute year on Feb 29 of leap year to non-leap year clips day."""
+        dt = datetime(2024, 2, 29, 12, 0)
+        result = dt + relativedelta(year=2025)
+        assert result == datetime(2025, 2, 28, 12, 0)
+
+    def test_absolute_year_nonleap_to_leap(self):
+        """Absolute year on Feb 28 of non-leap year to leap year keeps day."""
+        dt = datetime(2025, 2, 28, 12, 0)
+        result = dt + relativedelta(year=2024)
+        assert result == datetime(2024, 2, 28, 12, 0)
+
+    def test_absolute_year_leap_to_nonleap_date(self):
+        """Same leap-year clip bug with date (not datetime)."""
+        d = date(2024, 2, 29)
+        result = d + relativedelta(year=2023)
+        assert result == date(2023, 2, 28)
+
 
 # ---------------------------------------------------------------------------
 # Weekday targeting
