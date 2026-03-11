@@ -202,8 +202,6 @@ class relativedelta:
             self.minutes = sign * (leftover // 60)
             self.seconds = sign * (leftover % 60)
             self.microseconds = remaining.microseconds
-            if sign < 0 and self.microseconds:
-                self.microseconds = -(1000000 - self.microseconds)
 
     def _normalize(self) -> None:
         """Carry over months >=12 into years (truncation toward zero)."""
@@ -427,9 +425,10 @@ class relativedelta:
         if self.day is not None:
             day = min(self.day, calendar.monthrange(year, month)[1])
 
-        # Handle leap day adjustment
-        if self.leapdays and month > 2 and not calendar.isleap(year):
-            day -= self.leapdays
+        # Handle leap day adjustment: add extra days on leap years after Feb
+        leapday_offset = 0
+        if self.leapdays and month > 2 and calendar.isleap(year):
+            leapday_offset = self.leapdays
 
         if is_datetime:
             assert isinstance(dt, datetime)
@@ -444,7 +443,7 @@ class relativedelta:
 
             result = datetime(year, month, day, tzinfo=dt.tzinfo)
             result += timedelta(
-                days=self.days,
+                days=self.days + leapday_offset,
                 hours=hour,
                 minutes=minute,
                 seconds=second,
@@ -452,7 +451,7 @@ class relativedelta:
             )
         else:
             result = date(year, month, day)  # type: ignore[assignment]
-            result += timedelta(days=self.days)  # type: ignore[assignment]
+            result += timedelta(days=self.days + leapday_offset)  # type: ignore[assignment]
 
         # Weekday adjustment
         if self.weekday is not None:

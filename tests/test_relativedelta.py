@@ -363,6 +363,61 @@ class TestDeltaBetweenDates:
         assert rd.minutes == 0
         assert rd.seconds == 0
 
+    def test_delta_negative_microseconds(self):
+        """Negative delta with microseconds should not double-count."""
+        dt1 = datetime(2026, 3, 11, 10, 0, 0, 0)
+        dt2 = datetime(2026, 3, 11, 10, 0, 0, 500000)
+        rd = relativedelta(dt1, dt2)
+        # -0.5 seconds: seconds should borrow, microseconds positive
+        assert rd.seconds == -1
+        assert rd.microseconds == 500000
+        # Roundtrip: dt2 + rd should equal dt1
+        assert dt2 + rd == dt1
+
+    def test_delta_negative_microseconds_roundtrip(self):
+        """Microsecond roundtrip for various negative deltas."""
+        pairs = [
+            (datetime(2026, 1, 1, 0, 0, 0, 0), datetime(2026, 1, 1, 0, 0, 0, 1)),
+            (datetime(2026, 1, 1, 0, 0, 0, 0), datetime(2026, 1, 1, 0, 0, 1, 750000)),
+            (datetime(2026, 6, 15, 12, 0, 0, 0), datetime(2026, 6, 15, 12, 0, 0, 999999)),
+        ]
+        for dt1, dt2 in pairs:
+            rd = relativedelta(dt1, dt2)
+            assert dt2 + rd == dt1, f"Roundtrip failed for {dt1} - {dt2}: {rd}"
+
+
+# ---------------------------------------------------------------------------
+# Leapdays
+# ---------------------------------------------------------------------------
+class TestLeapdays:
+    def test_leapdays_on_leap_year(self):
+        """leapdays should add extra days on leap years after Feb."""
+        dt = datetime(2024, 3, 1)  # 2024 is a leap year
+        rd = relativedelta(leapdays=1)
+        result = dt + rd
+        assert result == datetime(2024, 3, 2)
+
+    def test_leapdays_on_non_leap_year(self):
+        """leapdays should have no effect on non-leap years."""
+        dt = datetime(2025, 3, 1)  # 2025 is not a leap year
+        rd = relativedelta(leapdays=1)
+        result = dt + rd
+        assert result == datetime(2025, 3, 1)  # unchanged
+
+    def test_leapdays_before_march(self):
+        """leapdays should have no effect when month <= 2."""
+        dt = datetime(2024, 2, 15)  # leap year but month <= 2
+        rd = relativedelta(leapdays=1)
+        result = dt + rd
+        assert result == datetime(2024, 2, 15)  # unchanged
+
+    def test_leapdays_with_date(self):
+        """leapdays should work with date objects too."""
+        dt = date(2024, 4, 10)
+        rd = relativedelta(leapdays=1)
+        result = dt + rd
+        assert result == date(2024, 4, 11)
+
 
 # ---------------------------------------------------------------------------
 # Operators
