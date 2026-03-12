@@ -512,6 +512,33 @@ class TestBareNumberAmPm:
 
 
 # ---------------------------------------------------------------------------
+# Bug #117: Greedy timezone offset consumption
+# ---------------------------------------------------------------------------
+
+
+class TestTimezoneOffsetValidation:
+    def test_plus_sign_does_not_swallow_year(self):
+        # "Jan 15 + 2024" — the +2024 should NOT be treated as a tz offset
+        result = parse("Jan 15 + 2024", fuzzy=True, default=DEFAULT)
+        assert result.year == 2024
+        assert result.month == 1
+        assert result.day == 15
+
+    def test_valid_offset_still_works(self):
+        result = parse("2024-01-15 10:30 +05:30", default=DEFAULT)
+        assert result.utcoffset() == timedelta(hours=5, minutes=30)
+
+    def test_valid_offset_no_colon(self):
+        result = parse("2024-01-15 10:30 +0530", default=DEFAULT)
+        assert result.utcoffset() == timedelta(hours=5, minutes=30)
+
+    def test_invalid_minutes_rejected(self):
+        # +05:99 has invalid minutes — should not be consumed as tz
+        result = parse("Jan 15 2024 10:30 +05:99", fuzzy=True, default=DEFAULT)
+        assert result.tzinfo is None or result.utcoffset() != timedelta(hours=5, minutes=99)
+
+
+# ---------------------------------------------------------------------------
 # Top-level imports
 # ---------------------------------------------------------------------------
 

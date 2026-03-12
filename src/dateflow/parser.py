@@ -265,7 +265,12 @@ class _TokenStream:
 
 
 def _parse_numeric_offset(stream: _TokenStream) -> Optional[tzinfo]:
-    """Try to parse a numeric UTC offset at stream.pos (expects sign token)."""
+    """Try to parse a numeric UTC offset at stream.pos (expects sign token).
+
+    Returns None without advancing the stream if the offset is out of range
+    (hours > 23 or minutes > 59), so the tokens can be interpreted as date
+    components instead.
+    """
     p = stream.peek()
     if p is None or p[1] != "sign":
         return None
@@ -287,9 +292,11 @@ def _parse_numeric_offset(stream: _TokenStream) -> Optional[tzinfo]:
             and p3 is not None and p3[1] == "number"):
         hours = int(num_str)
         minutes = int(p3[2])
+        # Validate range before advancing
+        if hours > 23 or minutes > 59:
+            return None
         stream.advance(4)
     else:
-        stream.advance(2)
         num = int(num_str)
         if len(num_str) <= 2:
             hours = num
@@ -297,6 +304,10 @@ def _parse_numeric_offset(stream: _TokenStream) -> Optional[tzinfo]:
         else:
             hours = num // 100
             minutes = num % 100
+        # Validate range before advancing
+        if hours > 23 or minutes > 59:
+            return None
+        stream.advance(2)
 
     total_seconds = sign * (hours * 3600 + minutes * 60)
     return tzoffset(None, total_seconds)
