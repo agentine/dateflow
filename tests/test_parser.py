@@ -449,6 +449,38 @@ class TestEdgeCases:
 
 
 # ---------------------------------------------------------------------------
+# Bug #115: Hyphenated month-name dates
+# ---------------------------------------------------------------------------
+
+
+class TestHyphenatedMonthDates:
+    def test_day_month_year_hyphen(self):
+        # 15-Jan-2024
+        result = parse("15-Jan-2024", default=DEFAULT)
+        assert result == datetime(2024, 1, 15)
+
+    def test_month_day_year_hyphen(self):
+        # Jan-15-2024
+        result = parse("Jan-15-2024", default=DEFAULT)
+        assert result == datetime(2024, 1, 15)
+
+    def test_year_month_day_hyphen(self):
+        # 2024-Jan-15
+        result = parse("2024-Jan-15", default=DEFAULT)
+        assert result == datetime(2024, 1, 15)
+
+    def test_full_month_hyphenated(self):
+        # 15-January-2024
+        result = parse("15-January-2024", default=DEFAULT)
+        assert result == datetime(2024, 1, 15)
+
+    def test_hyphen_month_no_year(self):
+        result = parse("15-Jan", default=DEFAULT)
+        assert result.month == 1
+        assert result.day == 15
+
+
+# ---------------------------------------------------------------------------
 # Top-level imports
 # ---------------------------------------------------------------------------
 

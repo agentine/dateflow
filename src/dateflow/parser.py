@@ -326,6 +326,12 @@ def _parse_tokens(
             if lower in _MONTH_NAMES and comp.month is None:
                 comp.month = _MONTH_NAMES[lower]
                 stream.advance()
+                # Consume a following dash used as date separator (e.g. Jan-15-2024)
+                ps = stream.peek()
+                if ps is not None and ps[1] == "sign" and ps[2] == "-":
+                    ps2 = stream.peek(1)
+                    if ps2 is not None and ps2[1] == "number":
+                        stream.advance()
                 continue
 
             # AM/PM
@@ -436,9 +442,12 @@ def _parse_tokens(
                 stream.advance()
             # Consume a following dash (sign token used as date separator)
             elif ps is not None and ps[1] == "sign" and ps[2] == "-":
-                # Only treat as separator if followed by a number (date context)
+                # Only treat as separator if followed by a number or month word (date context)
                 ps2 = stream.peek(1)
-                if ps2 is not None and ps2[1] == "number":
+                if ps2 is not None and (
+                    ps2[1] == "number"
+                    or (ps2[1] == "word" and ps2[2].lower().rstrip(".") in _MONTH_NAMES)
+                ):
                     stream.advance()
             # Also consume a following comma
             elif ps is not None and ps[1] == "sep" and ps[2] == ",":
