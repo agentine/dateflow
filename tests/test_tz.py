@@ -189,6 +189,33 @@ class TestTzlocal:
     def test_repr(self):
         assert repr(tzlocal()) == "tzlocal()"
 
+    def test_utcoffset_datetime_min(self):
+        """Bug #106: tzlocal.utcoffset(datetime.min) should not crash."""
+        tz = tzlocal()
+        offset = tz.utcoffset(datetime.min)
+        assert offset is not None
+        assert timedelta(hours=-14) <= offset <= timedelta(hours=14)
+
+    def test_dst_datetime_min(self):
+        """Bug #106: tzlocal.dst(datetime.min) should not crash."""
+        tz = tzlocal()
+        dst_val = tz.dst(datetime.min)
+        assert dst_val is not None
+
+    def test_tzname_datetime_min(self):
+        """Bug #106: tzlocal.tzname(datetime.min) should not crash."""
+        tz = tzlocal()
+        name = tz.tzname(datetime.min)
+        assert name is not None
+        assert len(name) > 0
+
+    def test_utcoffset_datetime_max(self):
+        """Bug #106: tzlocal.utcoffset(datetime.max) should not crash."""
+        tz = tzlocal()
+        offset = tz.utcoffset(datetime.max)
+        assert offset is not None
+        assert timedelta(hours=-14) <= offset <= timedelta(hours=14)
+
 
 # ---------------------------------------------------------------------------
 # enfold

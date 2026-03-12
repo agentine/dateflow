@@ -134,7 +134,12 @@ class tzlocal(tzinfo):
             try:
                 stamp = dt.replace(tzinfo=None).timestamp()  # type: ignore[call-overload]
             except (OSError, OverflowError, ValueError):
-                stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+                try:
+                    stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+                except (OSError, OverflowError, ValueError):
+                    # Extreme datetime (e.g. datetime.min) — fall back to
+                    # current local offset.
+                    return timedelta(seconds=time.localtime().tm_gmtoff)
             tt = time.localtime(stamp)
         return timedelta(seconds=tt.tm_gmtoff)
 
@@ -145,7 +150,16 @@ class tzlocal(tzinfo):
             try:
                 stamp = dt.replace(tzinfo=None).timestamp()  # type: ignore[call-overload]
             except (OSError, OverflowError, ValueError):
-                stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+                try:
+                    stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+                except (OSError, OverflowError, ValueError):
+                    # Extreme datetime — fall back to current DST info.
+                    tt = time.localtime()
+                    if tt.tm_isdst > 0:
+                        std_offset = -(time.timezone)
+                        dst_offset = tt.tm_gmtoff
+                        return timedelta(seconds=dst_offset - std_offset)
+                    return timedelta(0)
             tt = time.localtime(stamp)
         if tt.tm_isdst > 0:
             std_offset = -(time.timezone)
@@ -159,7 +173,11 @@ class tzlocal(tzinfo):
         try:
             stamp = dt.replace(tzinfo=None).timestamp()  # type: ignore[call-overload]
         except (OSError, OverflowError, ValueError):
-            stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+            try:
+                stamp = time.mktime(dt.replace(tzinfo=None).timetuple())
+            except (OSError, OverflowError, ValueError):
+                # Extreme datetime — fall back to current tzname.
+                return time.tzname[0]
         tt = time.localtime(stamp)
         return time.tzname[1] if tt.tm_isdst > 0 else time.tzname[0]
 
