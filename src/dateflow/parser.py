@@ -354,6 +354,14 @@ def _parse_tokens(
                 stream.advance()
                 continue
 
+            # Dotted AM/PM: "a.m." / "p.m." tokenized as "a." + "m."
+            if lower in ("a", "p"):
+                pnext = stream.peek(1)
+                if pnext is not None and pnext[1] == "word" and pnext[2].lower().rstrip(".") == "m":
+                    comp.ampm = "am" if lower == "a" else "pm"
+                    stream.advance(2)
+                    continue
+
             # Ordinal suffix after a day number
             if lower in _ORDINAL_SUFFIXES:
                 stream.advance()

@@ -639,6 +639,39 @@ class TestIsoparse:
 
 
 # ---------------------------------------------------------------------------
+# Bug #120: a.m./p.m. with periods
+# ---------------------------------------------------------------------------
+
+
+class TestDottedAmPm:
+    def test_am_with_periods(self):
+        result = parse("10:30 a.m.", default=DEFAULT)
+        assert result.hour == 10
+        assert result.minute == 30
+
+    def test_pm_with_periods(self):
+        result = parse("10:30 p.m.", default=DEFAULT)
+        assert result.hour == 22
+        assert result.minute == 30
+
+    def test_am_with_periods_and_date(self):
+        result = parse("Jan 15, 2024 10:30 a.m.", default=DEFAULT)
+        assert result == datetime(2024, 1, 15, 10, 30)
+
+    def test_pm_with_periods_and_date(self):
+        result = parse("Jan 15, 2024 3:30 p.m.", default=DEFAULT)
+        assert result == datetime(2024, 1, 15, 15, 30)
+
+    def test_12_am_with_periods(self):
+        result = parse("12:00 a.m.", default=DEFAULT)
+        assert result.hour == 0
+
+    def test_12_pm_with_periods(self):
+        result = parse("12:00 p.m.", default=DEFAULT)
+        assert result.hour == 12
+
+
+# ---------------------------------------------------------------------------
 # Top-level imports
 # ---------------------------------------------------------------------------
 
