@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 import re
 from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Optional, Tuple, Union
@@ -296,7 +297,7 @@ def _parse_numeric_offset(stream: _TokenStream) -> Optional[tzinfo]:
         hours = int(num_str)
         minutes = int(p3[2])
         # Validate range before advancing
-        if hours > 23 or minutes > 59:
+        if hours > 14 or minutes > 59:
             return None
         stream.advance(4)
     else:
@@ -307,8 +308,8 @@ def _parse_numeric_offset(stream: _TokenStream) -> Optional[tzinfo]:
         else:
             hours = num // 100
             minutes = num % 100
-        # Validate range before advancing
-        if hours > 23 or minutes > 59:
+        # Validate range: max real UTC offset is +14:00 (Line Islands/Kiribati)
+        if hours > 14 or minutes > 59:
             return None
         stream.advance(2)
 
@@ -860,7 +861,8 @@ def isoparse(timestr: str) -> datetime:
     if m is not None:
         year = int(m.group(1))
         ordinal = int(m.group(2))
-        if ordinal < 1 or ordinal > 366:
+        max_ordinal = 366 if calendar.isleap(year) else 365
+        if ordinal < 1 or ordinal > max_ordinal:
             raise ParserError(f"Invalid ordinal date: {timestr!r}")
         try:
             result = datetime.strptime(f"{year}-{ordinal}", "%Y-%j")

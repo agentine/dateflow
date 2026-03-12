@@ -519,10 +519,13 @@ class TestBareNumberAmPm:
 class TestTimezoneOffsetValidation:
     def test_plus_sign_does_not_swallow_year(self):
         # "Jan 15 + 2024" — the +2024 should NOT be treated as a tz offset
-        result = parse("Jan 15 + 2024", fuzzy=True, default=DEFAULT)
+        # Use a different default year to ensure 2024 comes from the string
+        default_2020 = datetime(2020, 6, 1)
+        result = parse("Jan 15 + 2024", fuzzy=True, default=default_2020)
         assert result.year == 2024
         assert result.month == 1
         assert result.day == 15
+        assert result.tzinfo is None
 
     def test_valid_offset_still_works(self):
         result = parse("2024-01-15 10:30 +05:30", default=DEFAULT)
@@ -620,6 +623,16 @@ class TestIsoparse:
         result = isoparse("2024-070")
         assert result.month == 3
         assert result.day == 10
+
+    def test_ordinal_366_leap_year(self):
+        # 2024 is a leap year, day 366 is Dec 31
+        result = isoparse("2024-366")
+        assert result == datetime(2024, 12, 31)
+
+    def test_ordinal_366_non_leap_year_raises(self):
+        # 2023 is NOT a leap year, day 366 is invalid
+        with pytest.raises(ParserError):
+            isoparse("2023-366")
 
     def test_invalid_iso_raises(self):
         with pytest.raises(ParserError):
