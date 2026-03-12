@@ -56,7 +56,7 @@ class tzutc(tzinfo):
         return NotImplemented
 
     def __hash__(self) -> int:
-        return hash(("tzutc",))
+        return hash(self.utcoffset(None))
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ class tzoffset(tzinfo):
         return NotImplemented
 
     def __hash__(self) -> int:
-        return hash(("tzoffset", self._offset))
+        return hash(self._offset)
 
 
 # ---------------------------------------------------------------------------

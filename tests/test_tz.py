@@ -134,6 +134,30 @@ class TestUTC:
         assert u == z
         assert z == u
 
+    def test_tzutc_hash_matches_timezone_utc(self):
+        """Bug #104: hash(tzutc()) must equal hash(timezone.utc) since they are equal."""
+        u = tzutc()
+        assert u == timezone.utc
+        assert hash(u) == hash(timezone.utc)
+
+    def test_tzutc_hash_matches_tzoffset_zero(self):
+        """Bug #104: hash(tzutc()) must equal hash(tzoffset(None, 0)) since they are equal."""
+        u = tzutc()
+        z = tzoffset(None, 0)
+        assert u == z
+        assert hash(u) == hash(z)
+
+    def test_tzutc_usable_in_set_with_timezone_utc(self):
+        """Bug #104: tzutc() and timezone.utc should deduplicate in a set."""
+        s = {tzutc(), timezone.utc}
+        # They are equal, so the set should contain only one element.
+        assert len(s) == 1
+
+    def test_tzutc_usable_as_dict_key_with_timezone_utc(self):
+        """Bug #104: tzutc() and timezone.utc should map to the same dict key."""
+        d = {tzutc(): "value"}
+        assert d[timezone.utc] == "value"
+
 
 # ---------------------------------------------------------------------------
 # tzlocal
