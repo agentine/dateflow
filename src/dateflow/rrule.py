@@ -451,10 +451,11 @@ class rrule:
 
     def _iter_yearly(self) -> Iterator[datetime]:
         year = self._dtstart.year
-        # Safety: hard limit to prevent infinite loops
+        # Safety: hard limit to prevent infinite loops (counts iterations, not yields)
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             dates = self._expand_days_in_year(year)
             period_results: List[datetime] = []
             for d in dates:
@@ -463,15 +464,15 @@ class rrule:
             period_results = self._apply_bysetpos(period_results)
             for dt in self._filter_dtstart(period_results):
                 yield dt
-                count += 1
             year += self._interval
 
     def _iter_monthly(self) -> Iterator[datetime]:
         year = self._dtstart.year
         month = self._dtstart.month
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             dates = self._expand_days_in_month(year, month)
             if self._bymonth is not None:
                 dates = [d for d in dates if d.month in self._bymonth]
@@ -482,7 +483,6 @@ class rrule:
             period_results = self._apply_bysetpos(period_results)
             for dt in self._filter_dtstart(period_results):
                 yield dt
-                count += 1
             # Advance by interval months
             month += self._interval
             while month > 12:
@@ -498,9 +498,10 @@ class rrule:
         week_start = date(ds.year, ds.month, ds.day) - timedelta(days=diff)
 
         max_iter = 100000
-        count = 0
+        iterations = 0
 
-        while count < max_iter:
+        while iterations < max_iter:
+            iterations += 1
             # Generate days in this week
             week_dates: List[date] = []
             if self._byweekday is not None:
@@ -522,14 +523,14 @@ class rrule:
             period_results = self._apply_bysetpos(period_results)
             for dt in self._filter_dtstart(period_results):
                 yield dt
-                count += 1
             week_start += timedelta(weeks=self._interval)
 
     def _iter_daily(self) -> Iterator[datetime]:
         d = date(self._dtstart.year, self._dtstart.month, self._dtstart.day)
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             # Filter by BYXXX
             ok = True
             if self._bymonth is not None and d.month not in self._bymonth:
@@ -551,14 +552,14 @@ class rrule:
                 period_results.sort()
                 for dt in self._filter_dtstart(period_results):
                     yield dt
-                    count += 1
             d += timedelta(days=self._interval)
 
     def _iter_hourly(self) -> Iterator[datetime]:
         current = self._dtstart
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             ok = True
             if self._bymonth is not None and current.month not in self._bymonth:
                 ok = False
@@ -587,15 +588,15 @@ class rrule:
                 period_results.sort()
                 for dt in period_results:
                     yield dt
-                    count += 1
 
             current += timedelta(hours=self._interval)
 
     def _iter_minutely(self) -> Iterator[datetime]:
         current = self._dtstart
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             ok = True
             if self._bymonth is not None and current.month not in self._bymonth:
                 ok = False
@@ -620,15 +621,15 @@ class rrule:
                     dt = current.replace(second=s)
                     if dt >= self._dtstart:
                         yield dt
-                        count += 1
 
             current += timedelta(minutes=self._interval)
 
     def _iter_secondly(self) -> Iterator[datetime]:
         current = self._dtstart
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             ok = True
             if self._bymonth is not None and current.month not in self._bymonth:
                 ok = False
@@ -651,7 +652,6 @@ class rrule:
 
             if ok:
                 yield current
-                count += 1
 
             current += timedelta(seconds=self._interval)
 
@@ -659,8 +659,9 @@ class rrule:
         """Handle byeaster: offsets from Easter Sunday."""
         year = self._dtstart.year
         max_iter = 100000
-        count = 0
-        while count < max_iter:
+        iterations = 0
+        while iterations < max_iter:
+            iterations += 1
             try:
                 easter_date = _easter_func(year)
             except ValueError:
@@ -670,7 +671,6 @@ class rrule:
                 for dt in self._expand_time(d):
                     if dt >= self._dtstart:
                         yield dt
-                        count += 1
             year += self._interval
 
     # ------------------------------------------------------------------
