@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from dateflow.parser import ParserError, parse
+from dateflow.parser import ParserError, isoparse, parse
 from dateflow.tz import tzoffset, tzutc
 
 
@@ -564,6 +564,78 @@ class TestDefaultTimezone:
         result = parse("Jan 15 2024", default=tz_default)
         assert result.tzinfo is not None
         assert result.utcoffset() == timedelta(0)
+
+
+# ---------------------------------------------------------------------------
+# Bug #119: isoparse() function
+# ---------------------------------------------------------------------------
+
+
+class TestIsoparse:
+    def test_standard_date(self):
+        assert isoparse("2024-01-15") == datetime(2024, 1, 15)
+
+    def test_standard_datetime(self):
+        assert isoparse("2024-01-15T10:30:00") == datetime(2024, 1, 15, 10, 30, 0)
+
+    def test_standard_with_tz(self):
+        result = isoparse("2024-01-15T10:30:00Z")
+        assert result == datetime(2024, 1, 15, 10, 30, 0, tzinfo=tzutc())
+
+    def test_compact_date(self):
+        assert isoparse("20240115") == datetime(2024, 1, 15)
+
+    def test_compact_datetime(self):
+        assert isoparse("20240115T103000") == datetime(2024, 1, 15, 10, 30, 0)
+
+    def test_compact_with_tz(self):
+        result = isoparse("20240115T103000Z")
+        assert result.utcoffset() == timedelta(0)
+
+    def test_week_date_with_day(self):
+        # 2024-W03-1 = Monday of week 3 of 2024 = Jan 15 2024
+        result = isoparse("2024-W03-1")
+        assert result == datetime(2024, 1, 15)
+
+    def test_week_date_without_day(self):
+        # 2024-W03 defaults to Monday
+        result = isoparse("2024-W03")
+        assert result == datetime(2024, 1, 15)
+
+    def test_week_date_compact(self):
+        result = isoparse("2024W031")
+        assert result == datetime(2024, 1, 15)
+
+    def test_ordinal_date(self):
+        # 2024-015 = Jan 15
+        result = isoparse("2024-015")
+        assert result == datetime(2024, 1, 15)
+
+    def test_ordinal_date_compact(self):
+        result = isoparse("2024015")
+        assert result == datetime(2024, 1, 15)
+
+    def test_ordinal_date_march(self):
+        # 2024-070 = March 11 (2024 is leap year: 31+29+10=70)
+        result = isoparse("2024-070")
+        assert result.month == 3
+        assert result.day == 10
+
+    def test_invalid_iso_raises(self):
+        with pytest.raises(ParserError):
+            isoparse("not-a-date")
+
+    def test_empty_raises(self):
+        with pytest.raises(ParserError):
+            isoparse("")
+
+    def test_non_string_raises(self):
+        with pytest.raises(TypeError):
+            isoparse(12345)  # type: ignore[arg-type]
+
+    def test_import_from_dateflow(self):
+        from dateflow import isoparse as ip
+        assert callable(ip)
 
 
 # ---------------------------------------------------------------------------

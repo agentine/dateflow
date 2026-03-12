@@ -720,3 +720,146 @@ def parse(
     if fuzzy_with_tokens:
         return result, tuple(skipped)
     return result
+
+
+# ---------------------------------------------------------------------------
+# ISO 8601 strict parser (isoparse)
+# ---------------------------------------------------------------------------
+
+# Compact date: 20240115 (with optional time)
+_ISO_COMPACT_RE = re.compile(
+    r"^(\d{4})(\d{2})(\d{2})"
+    r"(?:[T ](\d{2})(\d{2})(\d{2})(?:\.(\d+))?"
+    r"(Z|[+\-]\d{2}:?\d{2})?"
+    r")?$"
+)
+
+# Week date: 2024-W03, 2024-W03-1, 2024W03, 2024W031
+_ISO_WEEK_RE = re.compile(
+    r"^(\d{4})-?W(\d{2})(?:-?(\d))?$"
+)
+
+# Ordinal date: 2024-070 or 2024070
+_ISO_ORDINAL_RE = re.compile(
+    r"^(\d{4})-?(\d{3})$"
+)
+
+
+def _parse_iso_tz(tz_str: str) -> tzinfo:
+    """Parse an ISO timezone suffix (Z or +/-HH:MM)."""
+    if tz_str == "Z":
+        return tzutc()
+    sign = 1 if tz_str[0] == "+" else -1
+    tz_str = tz_str[1:]
+    if ":" in tz_str:
+        parts = tz_str.split(":")
+        hours = int(parts[0])
+        minutes = int(parts[1])
+    else:
+        hours = int(tz_str[:2])
+        minutes = int(tz_str[2:4]) if len(tz_str) >= 4 else 0
+    total = sign * (hours * 3600 + minutes * 60)
+    return tzoffset(None, total)
+
+
+def isoparse(timestr: str) -> datetime:
+    """Parse an ISO 8601 date/time string strictly.
+
+    Supports:
+    - Standard: ``2024-01-15``, ``2024-01-15T10:30:00``
+    - Compact: ``20240115``, ``20240115T103000``
+    - Week dates: ``2024-W03``, ``2024-W03-1``, ``2024W031``
+    - Ordinal dates: ``2024-070``, ``2024070``
+
+    Parameters
+    ----------
+    timestr : str
+        An ISO 8601 date/time string.
+
+    Returns
+    -------
+    datetime
+        Parsed datetime.
+
+    Raises
+    ------
+    ParserError
+        When the string is not valid ISO 8601.
+    """
+    if not isinstance(timestr, str):
+        raise TypeError(
+            f"isoparse argument must be a string, not {type(timestr).__name__}"
+        )
+
+    stripped = timestr.strip()
+    if not stripped:
+        raise ParserError(f"String does not contain a date: {timestr!r}")
+
+    # Try standard ISO 8601 (YYYY-MM-DD with optional time) via existing path
+    m = _ISO_FULL_RE.match(stripped)
+    if m is not None:
+        comp = _try_iso(stripped)
+        if comp is not None:
+            default = datetime(1, 1, 1)
+            try:
+                return comp.to_datetime(default)
+            except (ValueError, OverflowError) as exc:
+                raise ParserError(
+                    f"Invalid date values in {timestr!r}: {exc}"
+                ) from exc
+
+    # Compact format: 20240115 or 20240115T103000
+    m = _ISO_COMPACT_RE.match(stripped)
+    if m is not None:
+        year = int(m.group(1))
+        month = int(m.group(2))
+        day = int(m.group(3))
+        hour = int(m.group(4)) if m.group(4) is not None else 0
+        minute = int(m.group(5)) if m.group(5) is not None else 0
+        second = int(m.group(6)) if m.group(6) is not None else 0
+        microsecond = 0
+        if m.group(7) is not None:
+            frac = m.group(7)[:6].ljust(6, "0")
+            microsecond = int(frac)
+        tz = None
+        if m.group(8) is not None:
+            tz = _parse_iso_tz(m.group(8))
+        try:
+            return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=tz)
+        except (ValueError, OverflowError) as exc:
+            raise ParserError(
+                f"Invalid date values in {timestr!r}: {exc}"
+            ) from exc
+
+    # Week date: 2024-W03, 2024-W03-1, 2024W03, 2024W031
+    m = _ISO_WEEK_RE.match(stripped)
+    if m is not None:
+        year = int(m.group(1))
+        week = int(m.group(2))
+        day = int(m.group(3)) if m.group(3) is not None else 1
+        if week < 1 or week > 53 or day < 1 or day > 7:
+            raise ParserError(f"Invalid ISO week date: {timestr!r}")
+        try:
+            result = datetime.strptime(f"{year}-{week}-{day}", "%G-%V-%u")
+            return result
+        except ValueError as exc:
+            raise ParserError(
+                f"Invalid ISO week date in {timestr!r}: {exc}"
+            ) from exc
+
+    # Ordinal date: 2024-070, 2024070
+    m = _ISO_ORDINAL_RE.match(stripped)
+    if m is not None:
+        year = int(m.group(1))
+        ordinal = int(m.group(2))
+        if ordinal < 1 or ordinal > 366:
+            raise ParserError(f"Invalid ordinal date: {timestr!r}")
+        try:
+            result = datetime.strptime(f"{year}-{ordinal}", "%Y-%j")
+            return result
+        except ValueError as exc:
+            raise ParserError(
+                f"Invalid ordinal date in {timestr!r}: {exc}"
+            ) from exc
+
+    raise ParserError(f"Not a valid ISO 8601 string: {timestr!r}")

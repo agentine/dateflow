@@ -14,7 +14,7 @@ from dateflow.relativedelta import (
     weekday,
 )
 from dateflow.easter import easter
-from dateflow.parser import ParserError, parse
+from dateflow.parser import ParserError, isoparse, parse
 from dateflow.tz import (
     UTC,
     gettz,
@@ -39,6 +39,7 @@ __all__ = [
     "SU",
     "easter",
     "parse",
+    "isoparse",
     "ParserError",
     "UTC",
     "gettz",
