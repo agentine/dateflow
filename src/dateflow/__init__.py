@@ -15,6 +15,18 @@ from dateflow.relativedelta import (
 )
 from dateflow.easter import easter
 from dateflow.parser import ParserError, isoparse, parse
+from dateflow.rrule import (
+    YEARLY,
+    MONTHLY,
+    WEEKLY,
+    DAILY,
+    HOURLY,
+    MINUTELY,
+    SECONDLY,
+    rrule,
+    rruleset,
+    rrulestr,
+)
 from dateflow.tz import (
     UTC,
     gettz,
@@ -50,4 +62,14 @@ __all__ = [
     "resolve_imaginary",
     "datetime_exists",
     "datetime_ambiguous",
+    "YEARLY",
+    "MONTHLY",
+    "WEEKLY",
+    "DAILY",
+    "HOURLY",
+    "MINUTELY",
+    "SECONDLY",
+    "rrule",
+    "rruleset",
+    "rrulestr",
 ]
