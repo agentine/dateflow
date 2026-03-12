@@ -550,6 +550,7 @@ class rrule:
             if ok:
                 period_results: List[datetime] = self._expand_time(d)
                 period_results.sort()
+                period_results = self._apply_bysetpos(period_results)
                 for dt in self._filter_dtstart(period_results):
                     yield dt
             d += timedelta(days=self._interval)
@@ -586,6 +587,7 @@ class rrule:
                         if dt >= self._dtstart:
                             period_results.append(dt)
                 period_results.sort()
+                period_results = self._apply_bysetpos(period_results)
                 for dt in period_results:
                     yield dt
 
@@ -617,10 +619,14 @@ class rrule:
 
             if ok:
                 seconds = self._bysecond if self._bysecond else (current.second,)
+                period_results = []
                 for s in sorted(seconds):
                     dt = current.replace(second=s)
                     if dt >= self._dtstart:
-                        yield dt
+                        period_results.append(dt)
+                period_results = self._apply_bysetpos(period_results)
+                for dt in period_results:
+                    yield dt
 
             current += timedelta(minutes=self._interval)
 
@@ -651,7 +657,9 @@ class rrule:
                 ok = False
 
             if ok:
-                yield current
+                period_results = self._apply_bysetpos([current])
+                for dt in period_results:
+                    yield dt
 
             current += timedelta(seconds=self._interval)
 
@@ -666,11 +674,16 @@ class rrule:
                 easter_date = _easter_func(year)
             except ValueError:
                 break
+            period_results: List[datetime] = []
             for offset in sorted(self._byeaster):  # type: ignore
                 d = easter_date + timedelta(days=offset)
                 for dt in self._expand_time(d):
                     if dt >= self._dtstart:
-                        yield dt
+                        period_results.append(dt)
+            period_results.sort()
+            period_results = self._apply_bysetpos(period_results)
+            for dt in period_results:
+                yield dt
             year += self._interval
 
     # ------------------------------------------------------------------
