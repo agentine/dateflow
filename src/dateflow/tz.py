@@ -257,12 +257,21 @@ def resolve_imaginary(dt: datetime) -> datetime:
         return dt
 
 
-def datetime_exists(dt: datetime) -> bool:
+def datetime_exists(dt: datetime, tz: Optional[tzinfo] = None) -> bool:
     """Return ``False`` if *dt* is in a spring-forward DST gap.
 
     A time is "imaginary" (non-existent) if the local clock skips over
     it during a DST transition.
+
+    Parameters
+    ----------
+    dt : datetime
+        The datetime to check.
+    tz : tzinfo or None
+        If provided and *dt* is naive, attach this timezone before checking.
     """
+    if tz is not None and dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
     if dt.tzinfo is None:
         return True
 
@@ -283,11 +292,20 @@ def datetime_exists(dt: datetime) -> bool:
     return offset1 <= offset0
 
 
-def datetime_ambiguous(dt: datetime) -> bool:
+def datetime_ambiguous(dt: datetime, tz: Optional[tzinfo] = None) -> bool:
     """Return ``True`` if *dt* is in a fall-back DST overlap.
 
     An ambiguous time occurs twice during the fall-back transition.
+
+    Parameters
+    ----------
+    dt : datetime
+        The datetime to check.
+    tz : tzinfo or None
+        If provided and *dt* is naive, attach this timezone before checking.
     """
+    if tz is not None and dt.tzinfo is None:
+        dt = dt.replace(tzinfo=tz)
     if dt.tzinfo is None:
         return False
 

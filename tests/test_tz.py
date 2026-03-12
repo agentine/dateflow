@@ -230,6 +230,29 @@ class TestDatetimeExists:
         dt = datetime(2024, 3, 10, 2, 30)
         assert datetime_exists(dt) is True
 
+    def test_naive_with_tz_param_gap(self):
+        """Bug #105: datetime_exists(naive_dt, tz=tz) should attach tz and check."""
+        tz = gettz("America/New_York")
+        assert tz is not None
+        dt = datetime(2024, 3, 10, 2, 30)
+        assert dt.tzinfo is None
+        assert datetime_exists(dt, tz=tz) is False
+
+    def test_naive_with_tz_param_normal(self):
+        """Bug #105: datetime_exists(naive_dt, tz=tz) should return True for normal times."""
+        tz = gettz("America/New_York")
+        assert tz is not None
+        dt = datetime(2024, 6, 15, 12, 0)
+        assert datetime_exists(dt, tz=tz) is True
+
+    def test_aware_ignores_tz_param(self):
+        """Bug #105: If dt already has tzinfo, the tz param should be ignored."""
+        tz_ny = gettz("America/New_York")
+        tz_utc = gettz("UTC")
+        assert tz_ny is not None and tz_utc is not None
+        dt = datetime(2024, 6, 15, 12, 0, tzinfo=tz_utc)
+        assert datetime_exists(dt, tz=tz_ny) is True
+
 
 class TestDatetimeAmbiguous:
     def test_normal_time_not_ambiguous(self):
@@ -249,6 +272,29 @@ class TestDatetimeAmbiguous:
     def test_naive_never_ambiguous(self):
         dt = datetime(2024, 11, 3, 1, 30)
         assert datetime_ambiguous(dt) is False
+
+    def test_naive_with_tz_param_overlap(self):
+        """Bug #105: datetime_ambiguous(naive_dt, tz=tz) should attach tz and check."""
+        tz = gettz("America/New_York")
+        assert tz is not None
+        dt = datetime(2024, 11, 3, 1, 30)
+        assert dt.tzinfo is None
+        assert datetime_ambiguous(dt, tz=tz) is True
+
+    def test_naive_with_tz_param_normal(self):
+        """Bug #105: datetime_ambiguous(naive_dt, tz=tz) returns False for normal times."""
+        tz = gettz("America/New_York")
+        assert tz is not None
+        dt = datetime(2024, 6, 15, 12, 0)
+        assert datetime_ambiguous(dt, tz=tz) is False
+
+    def test_aware_ignores_tz_param(self):
+        """Bug #105: If dt already has tzinfo, the tz param should be ignored."""
+        tz_ny = gettz("America/New_York")
+        tz_utc = gettz("UTC")
+        assert tz_ny is not None and tz_utc is not None
+        dt = datetime(2024, 6, 15, 12, 0, tzinfo=tz_utc)
+        assert datetime_ambiguous(dt, tz=tz_ny) is False
 
 
 # ---------------------------------------------------------------------------
