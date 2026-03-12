@@ -421,6 +421,17 @@ def _parse_tokens(
 
                 continue
 
+        # ----- Bare number + AM/PM (e.g. "3pm", "3 pm", "11am") -----
+        if ttype == "number" and comp.hour is None:
+            # Check if the next non-ws token is an AM/PM word
+            p1 = stream.peek(1)
+            if p1 is not None and p1[1] == "word" and p1[2].lower().rstrip(".") in _AMPM:
+                comp.hour = int(tval)
+                comp.minute = 0
+                comp.ampm = _AMPM[p1[2].lower().rstrip(".")]
+                stream.advance(2)
+                continue
+
         # ----- Standalone offset sign -----
         if ttype == "sign" and comp.tzinfo is None:
             tz = _parse_numeric_offset(stream)

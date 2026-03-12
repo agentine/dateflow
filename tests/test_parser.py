@@ -481,6 +481,37 @@ class TestHyphenatedMonthDates:
 
 
 # ---------------------------------------------------------------------------
+# Bug #116: Bare number + AM/PM
+# ---------------------------------------------------------------------------
+
+
+class TestBareNumberAmPm:
+    def test_3pm(self):
+        result = parse("3pm", default=DEFAULT)
+        assert result.hour == 15
+
+    def test_3_pm_with_space(self):
+        result = parse("3 pm", default=DEFAULT)
+        assert result.hour == 15
+
+    def test_11am(self):
+        result = parse("11am", default=DEFAULT)
+        assert result.hour == 11
+
+    def test_12pm_is_noon(self):
+        result = parse("12pm", default=DEFAULT)
+        assert result.hour == 12
+
+    def test_12am_is_midnight(self):
+        result = parse("12am", default=DEFAULT)
+        assert result.hour == 0
+
+    def test_bare_number_ampm_with_date(self):
+        result = parse("Jan 15, 2024 3pm", default=DEFAULT)
+        assert result == datetime(2024, 1, 15, 15, 0)
+
+
+# ---------------------------------------------------------------------------
 # Top-level imports
 # ---------------------------------------------------------------------------
 
