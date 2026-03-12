@@ -539,6 +539,34 @@ class TestTimezoneOffsetValidation:
 
 
 # ---------------------------------------------------------------------------
+# Bug #118: Default timezone propagation
+# ---------------------------------------------------------------------------
+
+
+class TestDefaultTimezone:
+    def test_default_tz_propagated(self):
+        tz_default = datetime(2024, 1, 1, tzinfo=tzoffset("EST", -18000))
+        result = parse("Jan 15 2024 10:30", default=tz_default)
+        assert result.tzinfo is not None
+        assert result.utcoffset() == timedelta(hours=-5)
+
+    def test_explicit_tz_overrides_default(self):
+        tz_default = datetime(2024, 1, 1, tzinfo=tzoffset("EST", -18000))
+        result = parse("Jan 15 2024 10:30 UTC", default=tz_default)
+        assert result.utcoffset() == timedelta(0)
+
+    def test_no_default_tz_stays_naive(self):
+        result = parse("Jan 15 2024 10:30", default=DEFAULT)
+        assert result.tzinfo is None
+
+    def test_utc_default_propagated(self):
+        tz_default = datetime(2024, 1, 1, tzinfo=tzutc())
+        result = parse("Jan 15 2024", default=tz_default)
+        assert result.tzinfo is not None
+        assert result.utcoffset() == timedelta(0)
+
+
+# ---------------------------------------------------------------------------
 # Top-level imports
 # ---------------------------------------------------------------------------
 

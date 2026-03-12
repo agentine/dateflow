@@ -153,9 +153,12 @@ class _DateComponents:
         elif self.ampm == "am" and hour is not None and hour == 12:
             hour = 0
 
+        # If the parsed string had no timezone but the default does, propagate it
+        tz = self.tzinfo if self.tzinfo is not None else default.tzinfo
+
         return datetime(
             year, month, day, hour, minute, second, microsecond,
-            tzinfo=self.tzinfo,
+            tzinfo=tz,
         )
 
 
